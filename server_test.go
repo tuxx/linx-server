@@ -168,6 +168,47 @@ func TestNotFound(t *testing.T) {
 	}
 }
 
+func TestStaticTraversal(t *testing.T) {
+	mux := setup()
+
+	for _, target := range []string{
+		"/static/%2E%2E%2Ftemplates/base.html",
+		"/static/%2e%2e/templates/base.html",
+		"/static/css/%2E%2E%2F%2E%2E%2Ftemplates/base.html",
+		"/static/..%5Ctemplates/base.html",
+	} {
+		w := httptest.NewRecorder()
+
+		req, err := http.NewRequest("GET", target, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		mux.ServeHTTP(w, req)
+
+		if w.Code != 404 {
+			t.Errorf("%s: expected 404, got %d", target, w.Code)
+		}
+	}
+}
+
+func TestStaticFile(t *testing.T) {
+	mux := setup()
+
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("GET", "/static/css/linx.css", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mux.ServeHTTP(w, req)
+
+	if w.Code != 200 {
+		t.Fatalf("Expected 200, got %d", w.Code)
+	}
+}
+
 func TestFileNotFound(t *testing.T) {
 	mux := setup()
 	w := httptest.NewRecorder()

@@ -80,6 +80,16 @@ func staticHandler(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 
 		filePath := strings.TrimPrefix(path, Config.sitePath+"static/")
+
+		// r.URL.Path is already percent-decoded, so an encoded "../" would
+		// otherwise step out of the static box
+		for _, segment := range strings.FieldsFunc(filePath, func(c rune) bool { return c == '/' || c == '\\' }) {
+			if segment == ".." {
+				notFoundHandler(c, w, r)
+				return
+			}
+		}
+
 		file, err := staticBox.Open(filePath)
 		if err != nil {
 			notFoundHandler(c, w, r)
